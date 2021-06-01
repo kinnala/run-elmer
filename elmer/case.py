@@ -1,3 +1,5 @@
+import tempfile
+
 from .runners.docker import run
 from .mesh import to_file
 
@@ -14,11 +16,12 @@ class Case:
             image: str = 'elmer',
             tag: str = 'latest'):
 
-        to_file(self.mesh, "tmptest")
-        if verbose:
-            print(self.sif)
-        run("tmptest",
-            self.sif,
-            verbose=verbose,
-            image=image,
-            tag=tag)
+        with tempfile.TemporaryDirectory() as dirpath:
+            to_file(self.mesh, "{}/tmpmesh".format(dirpath))
+            if verbose:
+                print(self.sif)
+            run("{}/tmpmesh".format(dirpath),
+                self.sif,
+                verbose=verbose,
+                image=image,
+                tag=tag)
