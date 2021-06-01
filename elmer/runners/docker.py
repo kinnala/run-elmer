@@ -5,7 +5,10 @@ import tarfile
 import tempfile
 import json
 
+from typing import Optional
+
 import docker
+import meshio
 
 
 def get_container(image: str = 'elmer',
@@ -24,15 +27,6 @@ def get_container(image: str = 'elmer',
 
     """
     client = docker.from_env()
-
-    # TODO pull image if not present
-    #for line in client.api.pull(image,
-    #                            tag=tag,
-    #                            stream=True,
-    #                            decode=True):
-    #    if "status" in line:
-    #        print(line["status"])
-
     ctr = client.containers.create(image,
                                    command='sleep infinity',
                                    detach=True)
@@ -134,7 +128,8 @@ def run(filename,
         sif: str,
         verbose: bool = False,
         image: str = 'elmer',
-        tag: str = 'latest'):
+        tag: str = 'latest',
+        fetch: Optional[str] = None):
     """Run the case in Docker.
 
     Parameters
@@ -161,4 +156,10 @@ def run(filename,
     if verbose:
         print(res.output.decode('utf-8'))
 
+    retval = None
+    if fetch is not None:
+        retval = fetch_from_container(ctr, "/{}".format(fetch))
+
     clean_container(ctr)
+
+    return retval
