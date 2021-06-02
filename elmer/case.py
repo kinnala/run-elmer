@@ -23,8 +23,6 @@ class Case:
 
         with tempfile.TemporaryDirectory() as dirpath:
             to_file(self.mesh, "{}/tmpmesh".format(dirpath))
-            if verbose:
-                print(self.sif)
             retval = run("{}/tmpmesh".format(dirpath),
                          self.sif,
                          verbose=verbose,
