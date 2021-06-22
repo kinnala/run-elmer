@@ -1,7 +1,9 @@
 """Elmer import and export."""
 
+from typing import Optional
 from skfem.mesh import Mesh, MeshTri, MeshQuad, MeshTet, MeshHex
 from dataclasses import replace
+from numpy import ndarray
 
 
 MESH_TYPE_MAPPING = {
@@ -19,7 +21,10 @@ BOUNDARY_TYPE_MAPPING = {
 }
 
 
-def to_file(mesh: Mesh, filename: str):
+def to_file(mesh: Mesh,
+            filename: str,
+            t_id: Optional[ndarray] = None,
+            boundary_id: Optional[ndarray] = None):
     """The mesh is written to four files.
 
     The files are 'filename.{header,nodes,elements,boundary}'.
@@ -30,6 +35,11 @@ def to_file(mesh: Mesh, filename: str):
         The mesh object to export.
     filename
         The prefix of the filenames.
+    t_id
+        Optional array of integers; set to element identifier for multibody
+        meshes.
+    boundary_id
+        Optional array of identifying integers for boundary facets.
 
     """
     np = mesh.p.shape[1]
@@ -67,21 +77,23 @@ def to_file(mesh: Mesh, filename: str):
     # filename.elements
     with open(filename + '.elements', 'w') as handle:
         for itr in range(nt):
-            handle.write(("{} 1 {}"
+            handle.write(("{} {} {}"
                           + (" {}" * mesh.t.shape[0])
                           + "\n").format(
-                itr + 1,
-                MESH_TYPE_MAPPING[mesh_type],
-                *(mesh.t[:, itr] + 1)
-            ))
+                              itr + 1,
+                              1 if t_id is None else t_id[itr],
+                              MESH_TYPE_MAPPING[mesh_type],
+                              *(mesh.t[:, itr] + 1)
+                          ))
 
     # filename.boundary
     with open(filename + '.boundary', 'w') as handle:
         for itr in mesh.boundary_facets():
-            handle.write(("{} 1 {} {} {}"
+            handle.write(("{} {} {} {} {}"
                           + " {}" * mesh.facets.shape[0]
                           + "\n").format(
                 itr + 1,
+                1 if boundary_id is None else boundary_id[itr],
                 mesh.f2t[0, itr] + 1,
                 mesh.f2t[1, itr] + 1,
                 BOUNDARY_TYPE_MAPPING[mesh_type],
