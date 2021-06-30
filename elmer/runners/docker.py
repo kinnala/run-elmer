@@ -11,8 +11,7 @@ import docker
 import meshio
 
 
-def get_container(image: str = 'elmer',
-                  tag: str = 'latest'):
+def get_container(image: str, tag: str):
     """Pull and/or start a container that has `ElmerSolver`.
 
     Parameters
@@ -27,7 +26,15 @@ def get_container(image: str = 'elmer',
 
     """
     client = docker.from_env()
-    ctr = client.containers.create(image,
+
+    for line in client.api.pull(image,
+                                tag=tag,
+                                stream=True,
+                                decode=True):
+        if "status" in line:
+            print(line["status"])
+
+    ctr = client.containers.create("{}:{}".format(image, tag),
                                    command='sleep infinity',
                                    detach=True)
     ctr.start()
@@ -126,9 +133,9 @@ def fetch_from_container(ctr, filename: str):
 
 def run(filename,
         sif: str,
+        image: str,
+        tag: str,
         verbose: bool = False,
-        image: str = 'elmer',
-        tag: str = 'latest',
         fetch: Optional[str] = None):
     """Run the case in Docker.
 

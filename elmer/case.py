@@ -10,21 +10,22 @@ from .mesh import to_file
 
 class Case:
 
-    def __init__(self,
-                 mesh,
-                 sif,
-                 t_id: Optional[ndarray] = None,
-                 boundary_id: Optional[ndarray] = None):
+    def __init__(self, mesh, sif):
 
         self.mesh = mesh
-        self.sif = sif
-        self.t_id = t_id
-        self.boundary_id = boundary_id
+        self.sif = sif.format(**self._sif_mapping())
+
+    def _sif_mapping(self):
+
+        return {
+            **{key: ix + 2 for ix, key in enumerate(self.mesh.subdomains)},
+            **{key: ix + 2 for ix, key in enumerate(self.mesh.boundaries)},
+        }
 
     def run(self,
             verbose: bool = False,
-            image: str = 'elmer',
-            tag: str = 'latest',
+            image: str = 'ghcr.io/kinnala/elmer',
+            tag: str = 'devel-ba15974',
             fetch: Optional[str] = None):
 
         retval = None
@@ -33,8 +34,6 @@ class Case:
             to_file(
                 self.mesh,
                 "{}/tmpmesh".format(dirpath),
-                self.t_id,
-                self.boundary_id,
             )
             retval = run(
                 "{}/tmpmesh".format(dirpath),

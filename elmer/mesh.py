@@ -1,9 +1,11 @@
 """Elmer import and export."""
 
+import numpy as np
+from numpy import ndarray
+
 from typing import Optional
 from skfem.mesh import Mesh, MeshTri, MeshQuad, MeshTet, MeshHex
 from dataclasses import replace
-from numpy import ndarray
 
 
 MESH_TYPE_MAPPING = {
@@ -21,10 +23,7 @@ BOUNDARY_TYPE_MAPPING = {
 }
 
 
-def to_file(mesh: Mesh,
-            filename: str,
-            t_id: Optional[ndarray] = None,
-            boundary_id: Optional[ndarray] = None):
+def to_file(mesh: Mesh, filename: str):
     """The mesh is written to four files.
 
     The files are 'filename.{header,nodes,elements,boundary}'.
@@ -35,23 +34,33 @@ def to_file(mesh: Mesh,
         The mesh object to export.
     filename
         The prefix of the filenames.
-    t_id
-        Optional array of integers; set to element identifier for multibody
-        meshes.
-    boundary_id
-        Optional array of identifying integers for boundary facets.
 
     """
-    np = mesh.p.shape[1]
-    nt = mesh.t.shape[1]
+    npts = mesh.nvertices
+    nt = mesh.nelements
+    nfacets = mesh.nfacets
     mesh_type = type(mesh)
+
+    # build t_id and boundary_id
+    t_id = None
+    boundary_id = None
+
+    if mesh.subdomains is not None:
+        t_id = np.ones(nt, dtype=np.int64)
+        for ix, key in enumerate(mesh.subdomains):
+            t_id[mesh.subdomains[key]] = ix + 2
+
+    if mesh.boundaries is not None:
+        boundary_id = np.ones(nfacets, dtype=np.int64)
+        for ix, key in enumerate(mesh.boundaries):
+            boundary_id[mesh.boundaries[key]] = ix + 2
 
     if isinstance(mesh, MeshHex):
         mesh = replace(mesh, t=mesh.t[[1, 5, 3, 0, 4, 7, 6, 2]])
 
     # filename.header
     with open(filename + '.header', 'w') as handle:
-        handle.write("{} {} {}\n".format(np,
+        handle.write("{} {} {}\n".format(npts,
                                          nt,
                                          len(mesh.boundary_facets())))
         handle.write("2\n")
@@ -66,7 +75,7 @@ def to_file(mesh: Mesh,
 
     # filename.nodes
     with open(filename + '.nodes', 'w') as handle:
-        for itr in range(np):
+        for itr in range(npts):
             handle.write("{} -1 {} {} {}\n".format(
                 itr + 1,
                 mesh.p[0, itr],
