@@ -18,8 +18,8 @@ class Case:
     def _sif_mapping(self):
 
         return {
-            **{key: ix + 2 for ix, key in enumerate(self.mesh.subdomains)},
-            **{key: ix + 2 for ix, key in enumerate(self.mesh.boundaries)},
+            **({key: ix + 2 for ix, key in enumerate(self.mesh.subdomains)} if self.mesh.subdomains is not None else {}),
+            **({key: ix + 2 for ix, key in enumerate(self.mesh.boundaries)} if self.mesh.boundaries is not None else {}),
         }
 
     def run(self,
