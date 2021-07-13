@@ -1,3 +1,5 @@
+This is work in progress, expect a proper release before 2022.
+
 # Python setup for Elmer
 
 
