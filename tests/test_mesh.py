@@ -48,4 +48,4 @@ def test_elmer():
         fetch="results_t0001.vtu",
         verbose=True,
     )
-    assert len(results.points) == 25
+    assert len(out.points) == m.p.shape[1]
