@@ -1,9 +1,7 @@
 import elmer
 
-from skfem import MeshTri
-
 
 def test_elmer():
-    m = MeshTri()
+    m = elmer.MeshTri()
     case = elmer.Case(m, "")
     assert case.sif == ""
