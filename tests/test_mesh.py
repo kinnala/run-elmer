@@ -35,7 +35,7 @@ Solver 1
 End
 
 Boundary Condition 1
-  Target Boundaries(1) = 0
+  Target Boundaries(1) = 1
   Potential = Real 0
 End
 
