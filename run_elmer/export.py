@@ -23,37 +23,39 @@ BOUNDARY_TYPE_MAPPING = {
 }
 
 
-def to_file(mesh: Mesh, filename: str):
+def to_file(mesh: Mesh, path: str):
     """The mesh is written to four files.
 
-    The files are 'filename.{header,nodes,elements,boundary}'.
+    The files are ``<path>/mesh.{header,nodes,elements,boundary}``.
 
     Parameters
     ----------
     mesh
         The mesh object to export.
-    filename
-        The prefix of the filenames.
+    path
+        The path of the directory, e.g., `/home/user/case`
 
     """
+    filename = path + ('/' if path[-1] != '/' else '') + 'mesh'
     npts = mesh.nvertices
     nt = mesh.nelements
     nfacets = mesh.nfacets
     mesh_type = type(mesh)
 
     # build t_id and boundary_id
-    t_id = None
-    boundary_id = None
+    t_id = -1 * np.ones(nt, dtype=np.int64)
+    boundary_id = -1 * np.ones(nfacets, dtype=np.int64)
 
     if mesh.subdomains is not None:
-        t_id = np.ones(nt, dtype=np.int64)
-        for ix, key in enumerate(mesh.subdomains):
-            t_id[mesh.subdomains[key]] = ix + 2
+        for i, key in enumerate(mesh.subdomains):
+            t_id[mesh.subdomains[key]] = i + 1
 
     if mesh.boundaries is not None:
-        boundary_id = np.ones(nfacets, dtype=np.int64)
-        for ix, key in enumerate(mesh.boundaries):
-            boundary_id[mesh.boundaries[key]] = ix + 2
+        for i, key in enumerate(mesh.boundaries):
+            boundary_id[mesh.boundaries[key]] = i + 1
+
+    if (t_id == -1).any():
+        raise Exception("Each element must be part of some body.")
 
     if isinstance(mesh, MeshHex):
         mesh = replace(mesh, t=mesh.t[[1, 5, 3, 0, 4, 7, 6, 2]])
@@ -90,21 +92,21 @@ def to_file(mesh: Mesh, filename: str):
                           + (" {}" * mesh.t.shape[0])
                           + "\n").format(
                               itr + 1,
-                              1 if t_id is None else t_id[itr],
+                              t_id[itr],
                               MESH_TYPE_MAPPING[mesh_type],
                               *(mesh.t[:, itr] + 1)
                           ))
 
     # filename.boundary
     with open(filename + '.boundary', 'w') as handle:
-        for itr in mesh.boundary_facets():
+        for i, ix in enumerate(mesh.boundary_facets()):
             handle.write(("{} {} {} {} {}"
                           + " {}" * mesh.facets.shape[0]
                           + "\n").format(
-                itr + 1,
-                1 if boundary_id is None else boundary_id[itr],
-                mesh.f2t[0, itr] + 1,
-                mesh.f2t[1, itr] + 1,
-                BOUNDARY_TYPE_MAPPING[mesh_type],
-                *(mesh.facets[:, itr] + 1)
+                              i + 1,
+                              boundary_id[ix],
+                              mesh.f2t[0, ix] + 1,
+                              mesh.f2t[1, ix] + 1,
+                              BOUNDARY_TYPE_MAPPING[mesh_type],
+                              *(mesh.facets[:, ix] + 1)
             ))

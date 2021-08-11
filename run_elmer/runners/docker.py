@@ -11,7 +11,7 @@ import docker
 import meshio
 
 
-def get_container(image: str, tag: str):
+def get_container(image: str, tag: str, verbose: bool):
     """Pull and/or start a container that has `ElmerSolver`.
 
     Parameters
@@ -31,8 +31,9 @@ def get_container(image: str, tag: str):
                                 tag=tag,
                                 stream=True,
                                 decode=True):
-        if "status" in line:
-            print(line["status"])
+        if verbose:
+            if "status" in line:
+                print(line["status"])
 
     ctr = client.containers.create("{}:{}".format(image, tag),
                                    command='sleep infinity',
@@ -133,10 +134,10 @@ def fetch_from_container(ctr, filename: str):
 
 def run(filename,
         sif: str,
-        image: str,
-        tag: str,
-        verbose: bool = False,
-        fetch: Optional[str] = None):
+        outfile: str,
+        verbose: bool,
+        image: str = 'ghcr.io/kinnala/elmer',
+        tag: str = 'devel-ba15974'):
     """Run the case in Docker.
 
     Parameters
@@ -144,16 +145,25 @@ def run(filename,
     filename
         The mesh filename.
     sif
+    outfile
     verbose
     image
     tag
 
     """
-    ctr = get_container(image=image, tag=tag)
+    ctr = get_container(image, tag, verbose)
 
     for ext in ['header', 'nodes', 'elements', 'boundary']:
         with open("{}.{}".format(filename, ext), 'r') as handle:
-            _ = write_to_container(ctr, handle.read(), filename="mesh.{}".format(ext))
+            _ = write_to_container(ctr,
+                                   handle.read(),
+                                   filename="mesh.{}".format(ext))
+        if verbose:
+            cmd = "cat mesh.{}".format(ext)
+            print(cmd)
+            res = ctr.exec_run(cmd)
+            print(res.output.decode('utf-8'))
+
     filename = write_to_container(ctr, sif)
     _ = write_to_container(ctr, filename, filename="ELMERSOLVER_STARTINFO")
 
@@ -163,10 +173,7 @@ def run(filename,
     if verbose:
         print(res.output.decode('utf-8'))
 
-    retval = None
-    if fetch is not None:
-        retval = fetch_from_container(ctr, "/{}".format(fetch))
-
+    mio = fetch_from_container(ctr, "/{}".format(outfile))
     clean_container(ctr)
 
-    return retval
+    return mio

@@ -1,16 +1,29 @@
-This is work in progress, expect a proper release before 2022.
+# run_elmer
 
-# Python setup for Elmer
+Run Elmer FEM from Python.
+
+## Installation
+
+```
+pip install run_elmer
+```
+
+## Usage
 
 
 ```python
-import skfem as fem
+import run_elmer as elmer
 
-m = fem.MeshTri.init_sqsymmetric().refined(1).with_boundaries({
-    'left': lambda x: x[0] == 0,
-    'right': lambda x: x[0] == 1,
-})
-m  # use this in Elmer?
+m = elmer.mesh(
+    [[0, 0],
+     [0, 1],
+     [1, 0],
+     [1, 1]],
+    [[0, 1, 2],
+     [1, 2, 3]]
+).refined()
+
+m  # use in Elmer?
 ```
 
 
@@ -22,9 +35,7 @@ m  # use this in Elmer?
 
 
 ```python
-sif = """
-Check Keywords "Warn"
-
+out = elmer.run(m, """
 Header
   Mesh DB "." "."
 End
@@ -37,12 +48,7 @@ Simulation
   Steady State Max Iterations = 1
   Post File = "results.vtu"
 End
-"""
-```
 
-
-```python
-sif += """
 Body 1
   Equation = 1
   Body Force = 1
@@ -62,33 +68,53 @@ Solver 1
 End
 
 Boundary Condition 1
-  Target Boundaries(1) = {left}  ! named boundary
+  Target Boundaries(1) = 1
   Potential = Real 0
 End
-
-Boundary Condition 2
-  Target Boundaries(1) = {right} ! named boundary
-  Potential = Real 0.1
-End
-
-"""
-```
-
-
-```python
-import elmer
-
-case = elmer.Case(m, sif)
-results = case.run(
-    fetch='results_t0001.vtu',
-    verbose=True,
-)
+""", verbose=True)
 ```
 
     Pulling from kinnala/elmer
     Digest: sha256:2a19d445a8fa0d455ce2aa99355661fb7f80df497f82e0a161580efdfbafc7ff
     Status: Image is up to date for ghcr.io/kinnala/elmer:devel-ba15974
-    ELMER SOLVER (v 9.0) STARTED AT: 2021/06/30 15:12:16
+    cat mesh.header
+    9 8 8
+    2
+    303 8
+    202 8
+    
+    cat mesh.nodes
+    1 -1 0.0 0.0 0.0
+    2 -1 0.0 1.0 0.0
+    3 -1 1.0 0.0 0.0
+    4 -1 1.0 1.0 0.0
+    5 -1 0.0 0.5 0.0
+    6 -1 0.5 0.0 0.0
+    7 -1 0.5 0.5 0.0
+    8 -1 0.5 1.0 0.0
+    9 -1 1.0 0.5 0.0
+    
+    cat mesh.elements
+    1 1 303 1 5 6
+    2 1 303 2 7 8
+    3 1 303 2 5 7
+    4 1 303 3 7 9
+    5 1 303 3 6 7
+    6 1 303 4 8 9
+    7 1 303 5 6 7
+    8 1 303 7 8 9
+    
+    cat mesh.boundary
+    1 1 1 0 202 1 5
+    2 1 1 0 202 1 6
+    3 1 3 0 202 2 5
+    4 1 2 0 202 2 8
+    5 1 5 0 202 3 6
+    6 1 4 0 202 3 9
+    7 1 6 0 202 4 8
+    8 1 6 0 202 4 9
+    
+    ELMER SOLVER (v 9.0) STARTED AT: 2021/08/11 12:21:01
     ParCommInit:  Initialize #PEs:            1
     MAIN: 
     MAIN: =============================================================
@@ -104,14 +130,14 @@ results = case.run(
     MAIN: 
     MAIN: 
     MAIN: -------------------------------------
-    MAIN: Reading Model: /tmp89teo4y0.sif
-    LoadInputFile: Scanning input file: /tmp89teo4y0.sif
+    MAIN: Reading Model: /tmpj0zthrvd.sif
+    LoadInputFile: Scanning input file: /tmpj0zthrvd.sif
     LoadInputFile: Scanning only size info
     LoadInputFile: First time visiting
     LoadInputFile: Reading base load of sif file
-    LoadInputFile: Loading input file: /tmp89teo4y0.sif
+    LoadInputFile: Loading input file: /tmpj0zthrvd.sif
     LoadInputFile: Reading base load of sif file
-    LoadInputFile: Number of BCs: 2
+    LoadInputFile: Number of BCs: 1
     LoadInputFile: Number of Body Forces: 1
     LoadInputFile: Number of Initial Conditions: 0
     LoadInputFile: Number of Materials: 0
@@ -119,15 +145,15 @@ results = case.run(
     LoadInputFile: Number of Solvers: 1
     LoadInputFile: Number of Bodies: 1
     ElmerAsciiMesh: Base mesh name: ./.
-    LoadMesh: Elapsed REAL time:     0.0001 (s)
+    LoadMesh: Elapsed REAL time:     0.0002 (s)
     MAIN: -------------------------------------
     AddVtuOutputSolverHack: Adding ResultOutputSolver to write VTU output in file: results
     OptimizeBandwidth: ---------------------------------------------------------
     OptimizeBandwidth: Computing matrix structure for: poisson...done.
-    OptimizeBandwidth: Half bandwidth without optimization: 18
+    OptimizeBandwidth: Half bandwidth without optimization: 7
     OptimizeBandwidth: 
     OptimizeBandwidth: Bandwidth Optimization ...done.
-    OptimizeBandwidth: Half bandwidth after optimization: 10
+    OptimizeBandwidth: Half bandwidth after optimization: 4
     OptimizeBandwidth: ---------------------------------------------------------
     ElmerSolver: Number of timesteps to be saved: 1
     MAIN: 
@@ -135,8 +161,8 @@ results = case.run(
     MAIN:  Steady state iteration:            1
     MAIN: -------------------------------------
     MAIN: 
-    ComputeChange: NS (ITER=1) (NRM,RELC): ( 0.12856068      2.0000000     ) :: poisson
-    ComputeChange: SS (ITER=1) (NRM,RELC): ( 0.12856068      2.0000000     ) :: poisson
+    ComputeChange: NS (ITER=1) (NRM,RELC): ( 0.20833333E-01  2.0000000     ) :: poisson
+    ComputeChange: SS (ITER=1) (NRM,RELC): ( 0.20833333E-01  2.0000000     ) :: poisson
     ResultOutputSolver: -------------------------------------
     ResultOutputSolver: Saving with prefix: results
     ResultOutputSolver: Creating list for saving - if not present
@@ -147,62 +173,48 @@ results = case.run(
     ResultOutputSolver: -------------------------------------
     ElmerSolver: *** Elmer Solver: ALL DONE ***
     ElmerSolver: The end
-    SOLVER TOTAL TIME(CPU,REAL):         0.04        0.04
-    ELMER SOLVER FINISHED AT: 2021/06/30 15:12:16
+    SOLVER TOTAL TIME(CPU,REAL):         0.04        0.05
+    ELMER SOLVER FINISHED AT: 2021/08/11 12:21:01
     
 
 
 
 ```python
-results
+out.points
 ```
 
 
 
 
-    <meshio mesh object>
-      Number of points: 25
-      Number of cells:
-        triangle: 32
-        line: 16
-      Point data: potential
-      Cell data: GeometryIds
+    array([[0. , 0. , 0. ],
+           [0. , 1. , 0. ],
+           [1. , 0. , 0. ],
+           [1. , 1. , 0. ],
+           [0. , 0.5, 0. ],
+           [0.5, 0. , 0. ],
+           [0.5, 0.5, 0. ],
+           [0.5, 1. , 0. ],
+           [1. , 0.5, 0. ]])
 
 
 
 
 ```python
-results.point_data['potential']
+out.point_data
 ```
 
 
 
 
-    array([[0.        ],
-           [0.16904762],
-           [0.1       ],
-           [0.        ],
-           [0.18095238],
-           [0.1       ],
-           [0.        ],
-           [0.16904762],
-           [0.1       ],
-           [0.1172619 ],
-           [0.        ],
-           [0.11875   ],
-           [0.1672619 ],
-           [0.175     ],
-           [0.16875   ],
-           [0.1       ],
-           [0.1202381 ],
-           [0.        ],
-           [0.1702381 ],
-           [0.11875   ],
-           [0.175     ],
-           [0.16875   ],
-           [0.1       ],
-           [0.1172619 ],
-           [0.1672619 ]])
+    {'potential': array([[0.    ],
+            [0.    ],
+            [0.    ],
+            [0.    ],
+            [0.    ],
+            [0.    ],
+            [0.0625],
+            [0.    ],
+            [0.    ]])}
 
 
 
@@ -211,19 +223,29 @@ results.point_data['potential']
 from skfem.visuals.matplotlib import plot, draw, show
 
 ax = draw(m)
-plot(m, results.point_data['potential'].flatten(), ax=ax, shading='gouraud')
+plot(m, out.point_data['potential'].flatten(), ax=ax, shading='gouraud')
 ```
 
 
 
 
-    <matplotlib.axes._subplots.AxesSubplot at 0x7ff9ba6e45e0>
+    <matplotlib.axes._subplots.AxesSubplot at 0x7fbc526eae20>
 
 
 
 
-![png](readme_files/readme_7_1.png)
+![png](readme_files/readme_5_1.png)
 
+
+
+```python
+from skfem.visuals.svg import plot
+```
+
+
+```python
+
+```
 
 
 ```python
