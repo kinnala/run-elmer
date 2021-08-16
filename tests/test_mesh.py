@@ -1,4 +1,4 @@
-import elmer
+import run_elmer as elmer
 
 poisson = """
 Check Keywords "Warn"
@@ -43,9 +43,8 @@ End
 
 def test_elmer():
     m = elmer.MeshTri().refined()
-    case = elmer.Case(m, poisson)
-    out = case.run(
-        fetch="results_t0001.vtu",
-        verbose=True,
+    out = elmer.run(
+        m,
+        poisson,
     )
     assert len(out.points) == m.p.shape[1]

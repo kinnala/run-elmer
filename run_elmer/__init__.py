@@ -1,0 +1,44 @@
+import numpy as np
+
+from .run import run
+
+from skfem import MeshTri, MeshTet, MeshQuad, MeshHex
+
+
+def mesh(arg1=None, arg2=None):
+
+    if isinstance(arg1, list) and isinstance(arg2, list):
+        arg1 = np.array(arg1, np.float64)
+        arg2 = np.array(arg2, np.int64)
+
+    assert isinstance(arg1, np.ndarray)
+    assert isinstance(arg2, np.ndarray)
+
+    if arg1.shape[0] > arg1.shape[1]:
+        arg1 = arg1.T
+        arg2 = arg2.T
+
+    if arg1.shape[0] == 2:
+        if arg2.shape[0] == 3:
+            m = MeshTri(arg1, arg2)
+        elif arg2.shape[0] == 4:
+            m = MeshQuad(arg1, arg2)
+    elif arg1.shape[0] == 3:
+        if arg2.shape[0] == 4:
+            m = MeshTet(arg1, arg2)
+        elif arg2.shape[0] == 8:
+            m = MeshHex(arg1, arg2)
+
+    return m
+
+
+def target_boundaries(mesh, *keys):
+
+    boundaries = list(mesh.boundaries.keys())
+    keylist = []
+    for key in keys:
+        keylist.append(str(boundaries.index(key) + 1))
+    return "Target Boundaries({}) = {}".format(
+        len(keylist),
+        ' '.join(keylist)
+    )
