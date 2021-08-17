@@ -2,7 +2,7 @@
 
 - Run Elmer FEM (inside a container) from Python
 - Requires a working Docker and docker-py installations
-- In future: support using local Elmer FEM installation
+- In future: support using noncontainerized Elmer FEM binary
 
 ## Installation
 
@@ -30,6 +30,13 @@ m = elmer.mesh(
 
 m  # use in Elmer?
 ```
+
+
+
+
+![svg](readme_files/readme_1_0.svg)
+
+
 
 
 ```python
@@ -75,6 +82,48 @@ out.point_data
 ```
 
 
+
+
+    {'potential': array([[0.     ],
+            [0.     ],
+            [0.     ],
+            [0.     ],
+            [0.     ],
+            [0.125  ],
+            [0.125  ],
+            [0.125  ],
+            [0.     ],
+            [0.     ],
+            [0.09375],
+            [0.     ],
+            [0.09375],
+            [0.09375],
+            [0.09375],
+            [0.09375],
+            [0.     ],
+            [0.09375],
+            [0.     ],
+            [0.09375],
+            [0.09375],
+            [0.125  ],
+            [0.125  ],
+            [0.09375],
+            [0.09375]])}
+
+
+
+
 ```python
 elmer.plot(m, out.point_data['potential'], edges=True)
 ```
+
+
+
+
+    <matplotlib.axes._subplots.AxesSubplot at 0x7fe1198e1730>
+
+
+
+
+![png](readme_files/readme_4_1.png)
+
