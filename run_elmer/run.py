@@ -36,9 +36,6 @@ def run(mesh,
     if mesh.subdomains is None:
         mesh = mesh.with_subdomains({'domain': lambda x: 0 * x[0] + 1})
 
-    if mesh.boundaries is None:
-        mesh = mesh.with_boundaries({'boundary': lambda x: 0 * x[0] + 1})
-
     with tempfile.TemporaryDirectory() as dirpath:
         to_file(
             mesh,

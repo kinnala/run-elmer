@@ -1,3 +1,4 @@
+import pytest
 import run_elmer as elmer
 
 poisson = """
@@ -35,16 +36,22 @@ Solver 1
 End
 
 Boundary Condition 1
-  Target Boundaries(1) = 1
+  Target Boundaries(1) = -1
   Potential = Real 0
 End
 
 """
 
-def test_elmer():
-    m = elmer.MeshTri().refined()
+def test_poisson():
+    m = elmer.MeshTri().refined(3)
     out = elmer.run(
         m,
         poisson,
+        # verbose=True,
     )
+    assert 'potential' in out.point_data
     assert len(out.points) == m.p.shape[1]
+    x = out.point_data['potential'].flatten()
+    assert x.min() >= 0.
+    assert x.max() <= 0.073
+    assert x.max() >= 0.072
