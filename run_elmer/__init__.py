@@ -2,10 +2,14 @@ import numpy as np
 
 from .run import run
 
-from skfem import MeshTri, MeshTet, MeshQuad, MeshHex
+from skfem import Mesh, MeshTri, MeshTet, MeshQuad, MeshHex
 
 
 def mesh(arg1=None, arg2=None):
+
+    if arg2 is None:
+        if isinstance(arg1, str):
+            return Mesh.load(arg1)
 
     if isinstance(arg1, list) and isinstance(arg2, list):
         arg1 = np.array(arg1, np.float64)
@@ -42,3 +46,13 @@ def target_boundaries(mesh, *keys):
         len(keylist),
         ' '.join(keylist)
     )
+
+
+def plot(mesh, x, edges=False):
+    from skfem.visuals.matplotlib import plot, draw
+    if len(x.shape) > 1:
+        x = x.flatten()
+    if edges:
+        ax = draw(mesh)
+        return plot(mesh, x, ax=ax, shading='gouraud')
+    return plot(mesh, x, shading='gouraud')
