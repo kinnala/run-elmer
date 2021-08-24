@@ -48,6 +48,31 @@ def target_boundaries(mesh, *keys):
     )
 
 
+def targets(mesh):
+
+    targets = {}
+
+    if mesh.boundaries is not None:
+        boundaries = list(mesh.boundaries.keys())
+        targets['boundaries'] = {}
+        for key in boundaries:
+            targets['boundaries'][key] = "Target Boundaries({}) = {}".format(
+                1,
+                boundaries.index(key) + 1,
+            )
+
+    if mesh.subdomains is not None:
+        subdomains = list(mesh.subdomains.keys())
+        targets['bodies'] = {}
+        for key in subdomains:
+            targets['bodies'][key] = "Target Bodies({}) = {}".format(
+                1,
+                subdomains.index(key) + 1,
+            )
+
+    return targets
+
+
 def plot(mesh, x, edges=False):
     from skfem.visuals.matplotlib import plot, draw
     if len(x.shape) > 1:
